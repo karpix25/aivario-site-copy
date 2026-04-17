@@ -242,6 +242,93 @@ export const tools = toolSlugs.map((slug, index) => {
   return getFallbackTool(slug, index);
 });
 
+const toolProfileDetails = {
+  notebooklm: {
+    website: "https://notebooklm.google.com",
+    affiliate: "https://notebooklm.google.com",
+    intro:
+      "NotebookLM is Google's AI research workspace that lets you upload your own sources and query them with grounded answers. Instead of generic chat, it focuses on your documents, notes, and references.",
+    bestFor: [
+      "Researchers and analysts summarizing long PDFs",
+      "Students building study guides from source material",
+      "Teams creating internal knowledge briefs",
+      "Writers turning scattered notes into structured drafts"
+    ],
+    keyFeatures: [
+      "Source-grounded answers with citations",
+      "Notebook-level context across files and notes",
+      "Audio overview mode for quick consumption",
+      "Fast summary generation for long technical docs",
+      "Question-answer workflow built for research"
+    ],
+    pros: [
+      "Excellent at staying grounded in uploaded material",
+      "Very fast summaries with clear structure",
+      "Strong workflow for note synthesis and outlines",
+      "Free entry point for individuals"
+    ],
+    cons: [
+      "Less suited for broad open-web exploration",
+      "Output quality depends on source quality",
+      "Not a full writing suite with deep publishing features"
+    ],
+    pricingPlans: [
+      { plan: "Free", price: "$0", notes: "Core notebook workflow and source Q&A" },
+      { plan: "Workspace tiers", price: "Varies", notes: "Organization controls and scale depend on Google plan" }
+    ],
+    faqs: [
+      {
+        q: "Is NotebookLM free to use?",
+        a: "Yes, there is a free tier for core workflows. Team-level capabilities may depend on your Google Workspace setup."
+      },
+      {
+        q: "What makes NotebookLM different from ChatGPT?",
+        a: "NotebookLM is optimized for grounded answers from your uploaded sources, while general assistants are broader and less source-constrained by default."
+      },
+      {
+        q: "Can NotebookLM replace academic research tools?",
+        a: "It speeds up synthesis and note analysis, but you should still validate citations and claims in primary sources before publication."
+      }
+    ],
+    alternatives: ["perplexity", "consensus", "scite"],
+    verdict:
+      "NotebookLM is one of the strongest options for document-first research workflows. If your main bottleneck is understanding and synthesizing source material, it is a high-value pick."
+  }
+};
+
+function getDefaultToolProfile(tool) {
+  return {
+    website: `https://aivario.com/tools/${tool.slug}`,
+    affiliate: `https://aivario.com/tools/${tool.slug}`,
+    intro: `${tool.name} is listed in our directory as a ${tool.category.toLowerCase()} tool. This profile covers practical fit, pricing context, and decision criteria so you can evaluate it quickly.`,
+    bestFor: [
+      "Solo operators choosing a practical AI stack",
+      "Teams evaluating tools before paid rollout",
+      `Users focused on ${tool.category.toLowerCase()} workflows`
+    ],
+    keyFeatures: [
+      "Core workflow automation and output acceleration",
+      "AI-assisted quality improvements for repetitive tasks",
+      "Integrations or handoff paths for team operations"
+    ],
+    pros: ["Fast time-to-value", "Clear use-case alignment", "Useful for production workflows"],
+    cons: ["Needs testing against your real data", "Feature depth varies by plan"],
+    pricingPlans: [{ plan: "Starter", price: tool.price, notes: "Pricing can change; confirm on official website" }],
+    faqs: [
+      {
+        q: `Is ${tool.name} worth it in 2026?`,
+        a: `It is worth testing if ${tool.category.toLowerCase()} is a critical part of your workflow and the expected time savings justify subscription cost.`
+      },
+      {
+        q: `What is the best alternative to ${tool.name}?`,
+        a: "Use the comparison pages to benchmark alternatives by output quality, speed, and team fit before committing."
+      }
+    ],
+    alternatives: ["claude", "chatgpt", "perplexity"].filter((slug) => slug !== tool.slug),
+    verdict: `${tool.name} is a strong candidate when ${tool.category.toLowerCase()} outcomes are central to your work. Validate with a short real-world trial before scaling.`
+  };
+}
+
 export const blogPosts = [
   {
     slug: "ai-starterpack-2026",
@@ -415,7 +502,16 @@ export const topNav = [
 ];
 
 export function getTool(slug) {
-  return tools.find((tool) => tool.slug === slug);
+  const tool = tools.find((item) => item.slug === slug);
+  if (!tool) {
+    return undefined;
+  }
+
+  return {
+    ...tool,
+    ...getDefaultToolProfile(tool),
+    ...(toolProfileDetails[tool.slug] || {})
+  };
 }
 
 export function getBlogPost(slug) {

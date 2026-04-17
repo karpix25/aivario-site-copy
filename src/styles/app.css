@@ -526,6 +526,16 @@
   line-height: 1.1;
 }
 
+.breadcrumbs {
+  font-size: 0.82rem;
+  color: var(--ink3);
+}
+
+.breadcrumbs a {
+  text-decoration: none;
+  color: var(--ink2);
+}
+
 .back-link,
 .inline-link {
   color: var(--ink2);
@@ -567,6 +577,34 @@
   gap: 1rem;
 }
 
+.tool-kpis {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.kpi-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card2);
+  padding: 0.7rem;
+}
+
+.kpi-card small {
+  display: block;
+  color: var(--ink3);
+  margin-bottom: 0.35rem;
+}
+
+.kpi-card strong {
+  font-size: 0.96rem;
+}
+
+.content-section + .content-section {
+  margin-top: 1.05rem;
+}
+
 .article-body h2 {
   margin: 1rem 0 0.45rem;
   font-size: 1.2rem;
@@ -575,6 +613,67 @@
 .article-body p,
 .article-body li {
   color: var(--ink2);
+}
+
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pricing-table th,
+.pricing-table td {
+  padding: 0.65rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.pricing-table th {
+  background: var(--card2);
+  font-size: 0.85rem;
+}
+
+.pros-cons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.check-list,
+.x-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.check-list li::marker {
+  content: "✓ ";
+}
+
+.x-list li::marker {
+  content: "- ";
+}
+
+.faq-item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card2);
+  padding: 0.65rem 0.75rem;
+}
+
+.faq-item + .faq-item {
+  margin-top: 0.55rem;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.faq-item p {
+  margin: 0.55rem 0 0;
 }
 
 .toc-box {
@@ -592,6 +691,24 @@
 .toc-box p {
   margin: 0.5rem 0 0;
   color: var(--ink2);
+}
+
+.toc-link {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--ink2);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.toc-divider {
+  border-top: 1px solid var(--line);
+  margin: 0.75rem 0;
+}
+
+.toc-box h4 {
+  margin: 0;
+  font-size: 0.92rem;
 }
 
 .in-article-card {
@@ -669,7 +786,9 @@
 
   .guide-layout,
   .subscribe-card,
-  .detail-grid {
+  .detail-grid,
+  .tool-kpis,
+  .pros-cons-grid {
     grid-template-columns: 1fr;
   }
 }
