@@ -1,3 +1,5 @@
+import React from "react";
+
 const categories = [
   { name: "Productivity", tools: "27 tools" },
   { name: "Business", tools: "23 tools" },
