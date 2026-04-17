@@ -3,6 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function redirectGitHubPagesPath(location) {
+        if (location.search[1] !== "/") {
+          return;
+        }
+        var decoded = location.search
+          .slice(1)
+          .split("&")
+          .map(function (item) {
+            return item.replace(/~and~/g, "&");
+          })
+          .join("?");
+        window.history.replaceState(null, null, location.pathname.slice(0, -1) + decoded + location.hash);
+      })(window.location);
+    </script>
     <title>Test OpenCode</title>
   </head>
   <body>
