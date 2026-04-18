@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { tools } from "../data/siteData";
+import { tools } from "../data/contentRepository";
 
 export default function ToolsPage() {
   return (

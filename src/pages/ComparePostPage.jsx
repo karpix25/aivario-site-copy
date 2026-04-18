@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
-import { getComparison } from "../data/siteData";
+import { getComparison } from "../data/contentRepository";
 
 function parseNames(title) {
   const parts = title.split(" vs ");

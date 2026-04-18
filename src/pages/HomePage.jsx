@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { blogPosts, comparisons, tools } from "../data/siteData";
+import { blogPosts, comparisons, tools } from "../data/contentRepository";
 
 const featuredTools = tools.slice(0, 7);
 const categories = [

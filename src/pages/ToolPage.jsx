@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getTool } from "../data/siteData";
+import { getTool } from "../data/contentRepository";
 
 const tableOfContents = [
   { id: "overview", label: "Overview" },

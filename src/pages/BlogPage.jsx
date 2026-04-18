@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { blogPosts, formatDisplayDate } from "../data/siteData";
+import { blogPosts, formatDisplayDate } from "../data/contentRepository";
 
 export default function BlogPage() {
   const [featured, ...rest] = blogPosts;

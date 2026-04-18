@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
-import { formatDisplayDate, getBlogPost, tools } from "../data/siteData";
+import { formatDisplayDate, getBlogPost, tools } from "../data/contentRepository";
 
 export default function BlogPostPage() {
   const { slug } = useParams();

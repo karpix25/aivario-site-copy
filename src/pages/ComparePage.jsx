@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { comparisons } from "../data/siteData";
+import { comparisons } from "../data/contentRepository";
 
 function groupComparisons(items) {
   return items.reduce((acc, item) => {

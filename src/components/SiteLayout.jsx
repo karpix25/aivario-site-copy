@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { topNav } from "../data/siteData";
+import { topNav } from "../data/contentRepository";
 
 function navClass({ isActive }) {
   return isActive ? "active-link" : "";
