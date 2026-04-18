@@ -11,6 +11,7 @@ import {
 } from "./siteData";
 
 function normalizeGeneratedTool(item) {
+  const profile = item.profile || {};
   return {
     entityType: item.entityType || "tool",
     slug: item.slug,
@@ -23,19 +24,26 @@ function normalizeGeneratedTool(item) {
     website: item.websiteUrl || item.sourceUrl,
     affiliate: item.websiteUrl || item.sourceUrl,
     intro:
+      profile.intro ||
       item.descriptionShort ||
       `${item.name || item.slug} is included in our live catalog. This profile is synced from PostgreSQL and refreshed during data ingestion runs.`,
-    bestFor: [
-      "Teams comparing options before procurement",
-      "Operators looking for production-ready tools",
-      "Users evaluating features and pricing quickly"
-    ],
-    keyFeatures: [
-      "Live synced listing from ingestion pipeline",
-      "Category and tag metadata for filtering",
-      "Structured profile designed for SEO pages"
-    ],
-    pros: ["Fresh catalog data", "Consistent structure", "Scalable ingestion workflow"],
+    bestFor:
+      profile.targetUsers?.length > 0
+        ? profile.targetUsers
+        : [
+            "Teams comparing options before procurement",
+            "Operators looking for production-ready tools",
+            "Users evaluating features and pricing quickly"
+          ],
+    keyFeatures:
+      profile.features?.length > 0
+        ? profile.features
+        : [
+            "Live synced listing from ingestion pipeline",
+            "Category and tag metadata for filtering",
+            "Structured profile designed for SEO pages"
+          ],
+    pros: profile.benefits?.length > 0 ? profile.benefits : ["Fresh catalog data", "Consistent structure", "Scalable ingestion workflow"],
     cons: ["Some fields can be missing in source data", "Deep review text may require additional enrichment"],
     pricingPlans: [{ plan: "Current", price: item.pricingLabel || "n/a", notes: "Synced from latest source snapshot" }],
     faqs: [
@@ -48,11 +56,17 @@ function normalizeGeneratedTool(item) {
         a: "Profiles are updated when ingestion and enrichment jobs are executed."
       }
     ],
-    alternatives: [],
+    alternatives: profile.alternatives || [],
     verdict:
       "This profile is powered by the live ingestion pipeline. For production selection, compare alternatives and validate pricing on the official website.",
     tags: item.tags || [],
-    sourceUrl: item.sourceUrl
+    sourceUrl: item.sourceUrl,
+    platforms: item.platforms || [],
+    useCases: profile.useCases || [],
+    howToSteps: profile.howToSteps || [],
+    analytics: profile.analytics || {},
+    companyInfo: profile.companyInfo || {},
+    visitsMonthly: item.visitsMonthly || null
   };
 }
 

@@ -718,6 +718,33 @@
   font-size: 0.85rem;
 }
 
+.how-to-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.how-to-list li + li {
+  margin-top: 0.35rem;
+}
+
+.analytics-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.analytics-grid article {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.65rem;
+  background: var(--card2);
+}
+
+.analytics-grid small {
+  display: block;
+  color: var(--ink3);
+}
+
 .pros-cons-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

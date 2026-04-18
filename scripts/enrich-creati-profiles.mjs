@@ -62,6 +62,22 @@ function stripTags(value) {
   );
 }
 
+function toLineText(html) {
+  const withBreaks = html
+    .replace(/<\/(p|li|h1|h2|h3|h4|h5|h6|tr)>/gi, "\n")
+    .replace(/<br\s*\/?\s*>/gi, "\n");
+
+  return withBreaks
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
 function hashValue(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -265,6 +281,187 @@ function extractFaqs(jsonLdObjects) {
   return faqs;
 }
 
+function collectHeadings(html) {
+  const headings = [];
+  const regex = /<h([23])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    headings.push({
+      title: normalizeWhitespace(stripTags(match[2])).toLowerCase(),
+      index: match.index,
+      end: match.index + match[0].length
+    });
+  }
+  return headings;
+}
+
+function listItemsFromChunk(chunk) {
+  const items = [];
+  const regex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+  let match;
+  while ((match = regex.exec(chunk)) !== null) {
+    const value = normalizeWhitespace(stripTags(match[1]));
+    if (value && value.length <= 240) {
+      items.push(value);
+    }
+  }
+  return Array.from(new Set(items)).slice(0, 20);
+}
+
+function paragraphFromChunk(chunk) {
+  const match = chunk.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+  if (!match) {
+    return null;
+  }
+  const value = normalizeWhitespace(stripTags(match[1]));
+  return value || null;
+}
+
+function extractSectionList(html, headingKeywords) {
+  const headings = collectHeadings(html);
+  for (let i = 0; i < headings.length; i += 1) {
+    const heading = headings[i];
+    if (!headingKeywords.some((key) => heading.title.includes(key))) {
+      continue;
+    }
+
+    const nextIndex = headings[i + 1]?.index || Math.min(html.length, heading.end + 12000);
+    const chunk = html.slice(heading.end, nextIndex);
+    const items = listItemsFromChunk(chunk);
+    if (items.length > 0) {
+      return items;
+    }
+  }
+  return [];
+}
+
+function extractSectionParagraph(html, headingKeywords) {
+  const headings = collectHeadings(html);
+  for (let i = 0; i < headings.length; i += 1) {
+    const heading = headings[i];
+    if (!headingKeywords.some((key) => heading.title.includes(key))) {
+      continue;
+    }
+
+    const nextIndex = headings[i + 1]?.index || Math.min(html.length, heading.end + 8000);
+    const chunk = html.slice(heading.end, nextIndex);
+    const text = paragraphFromChunk(chunk);
+    if (text) {
+      return text;
+    }
+  }
+  return null;
+}
+
+function parseCompactNumber(input) {
+  if (!input) {
+    return null;
+  }
+
+  const normalized = String(input).trim().toLowerCase().replace(/,/g, ".");
+  const match = normalized.match(/([0-9]+(?:\.[0-9]+)?)([kmb])?/i);
+  if (!match) {
+    return null;
+  }
+
+  const number = Number.parseFloat(match[1]);
+  if (!Number.isFinite(number)) {
+    return null;
+  }
+
+  const suffix = match[2];
+  if (suffix === "k") {
+    return Math.round(number * 1_000);
+  }
+  if (suffix === "m") {
+    return Math.round(number * 1_000_000);
+  }
+  if (suffix === "b") {
+    return Math.round(number * 1_000_000_000);
+  }
+  return Math.round(number);
+}
+
+function extractMetric(lines, labels, valueRegex) {
+  for (let i = 0; i < lines.length; i += 1) {
+    const lineLower = lines[i].toLowerCase();
+    if (!labels.some((label) => lineLower.includes(label))) {
+      continue;
+    }
+
+    const sameMatch = lines[i].match(valueRegex);
+    if (sameMatch) {
+      return sameMatch[1];
+    }
+
+    for (let j = 1; j <= 3; j += 1) {
+      const nextLine = lines[i + j];
+      if (!nextLine) {
+        break;
+      }
+      const match = nextLine.match(valueRegex);
+      if (match) {
+        return match[1];
+      }
+    }
+  }
+  return null;
+}
+
+function extractAnalytics(lines) {
+  const monthlyVisitsRaw = extractMetric(lines, ["ежемесячные посещения", "monthly visits"], /([0-9]+(?:[.,][0-9]+)?\s*[kmb]?)/i);
+  const avgDuration = extractMetric(lines, ["средняя продолжительность", "average visit duration"], /([0-9]{2}:[0-9]{2}:[0-9]{2})/);
+  const pagesPerVisitRaw = extractMetric(lines, ["страниц за посещение", "pages per visit"], /([0-9]+(?:[.,][0-9]+)?)/);
+  const bounceRateRaw = extractMetric(lines, ["показатель отказа", "bounce rate"], /([0-9]+(?:[.,][0-9]+)?%)/);
+
+  const text = lines.join("\n");
+  const traffic = {};
+  const trafficPatterns = [
+    ["direct", /Direct\s*([0-9]+(?:[.,][0-9]+)?%)/i],
+    ["search", /Search\s*([0-9]+(?:[.,][0-9]+)?%)/i],
+    ["referrals", /Referrals?\s*([0-9]+(?:[.,][0-9]+)?%)/i],
+    ["social", /Social\s*([0-9]+(?:[.,][0-9]+)?%)/i],
+    ["paid_referrals", /Paid Referrals?\s*([0-9]+(?:[.,][0-9]+)?%)/i],
+    ["mail", /Mail\s*([0-9]+(?:[.,][0-9]+)?%)/i]
+  ];
+  for (const [key, pattern] of trafficPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      traffic[key] = match[1];
+    }
+  }
+
+  return {
+    monthlyVisits: parseCompactNumber(monthlyVisitsRaw),
+    avgDuration: avgDuration || null,
+    pagesPerVisit: pagesPerVisitRaw ? Number.parseFloat(pagesPerVisitRaw.replace(/,/g, ".")) : null,
+    bounceRate: bounceRateRaw || null,
+    trafficSources: traffic
+  };
+}
+
+function extractPlatforms(links) {
+  const items = [];
+  for (const link of links) {
+    if (!link.href.includes("/platform/")) {
+      continue;
+    }
+
+    const slug = link.href.split("/platform/")[1]?.split("/")[0];
+    if (!slug) {
+      continue;
+    }
+
+    items.push({ code: slug.toLowerCase(), name: link.text || slug });
+  }
+
+  const deduped = new Map();
+  for (const item of items) {
+    deduped.set(item.code, item);
+  }
+  return Array.from(deduped.values()).slice(0, 10);
+}
+
 async function fetchHtml(url) {
   const response = await fetch(url, {
     headers: {
@@ -291,6 +488,8 @@ function buildEnrichedRecord(url, html) {
   const links = extractLinksWithText(html);
   const websiteUrl = extractWebsiteUrl(links);
   const { categories, tags } = parseCategoryAndTagLinks(links, entityType);
+  const platforms = extractPlatforms(links);
+  const lines = toLineText(html);
 
   const softwareApplications = collectByType(jsonLd, "SoftwareApplication");
   const software = softwareApplications[0] || null;
@@ -300,6 +499,25 @@ function buildEnrichedRecord(url, html) {
   const ratingCount = Number.parseInt(String(software?.aggregateRating?.ratingCount ?? ""), 10);
   const pricingLabel = extractPricingLabel(software);
   const faqs = extractFaqs(jsonLd);
+  const analytics = extractAnalytics(lines);
+
+  const intro =
+    extractSectionParagraph(html, ["что такое", "what is"]) ||
+    software?.description ||
+    description ||
+    null;
+
+  const targetUsers = extractSectionList(html, ["кто будет использовать", "who will use", "who is it for"]);
+  const howToSteps = extractSectionList(html, ["как использовать", "how to use"]);
+  const features = extractSectionList(html, ["основные функции", "key features", "core features"]);
+  const benefits = extractSectionList(html, ["преимущества", "benefits"]);
+  const useCases = extractSectionList(html, ["сценарии", "use cases", "applications"]);
+  const alternatives = extractSectionList(html, ["конкуренты", "альтернатив", "alternatives"]);
+  const companyInfo = {
+    name: software?.name || null,
+    website: websiteUrl,
+    canonical
+  };
 
   const normalized = {
     sourceUrl: url,
@@ -318,10 +536,23 @@ function buildEnrichedRecord(url, html) {
       false,
     ratingValue: Number.isFinite(ratingValue) ? ratingValue : null,
     ratingCount: Number.isFinite(ratingCount) ? ratingCount : null,
+    visitsMonthly: analytics.monthlyVisits,
+    trafficSources: analytics.trafficSources,
     categories,
     tags,
-    platforms: [],
+    platforms,
     faqs,
+    profile: {
+      intro,
+      targetUsers,
+      howToSteps,
+      features,
+      benefits,
+      useCases,
+      alternatives,
+      companyInfo,
+      analytics
+    },
     rawHash: hashValue(html)
   };
 
@@ -379,6 +610,18 @@ async function upsertTag(client, tag) {
   return result.rows[0].id;
 }
 
+async function upsertPlatform(client, platform) {
+  const result = await client.query(
+    `INSERT INTO platforms (code, name)
+     VALUES ($1, $2)
+     ON CONFLICT (code)
+     DO UPDATE SET name = EXCLUDED.name
+     RETURNING id`,
+    [platform.code, platform.name || platform.code]
+  );
+  return result.rows[0].id;
+}
+
 async function persistEnrichment(client, rows) {
   const jobRes = await client.query(
     `INSERT INTO ingest_jobs (job_type, status)
@@ -406,11 +649,14 @@ async function persistEnrichment(client, rows) {
            has_free_plan = COALESCE($9, has_free_plan),
            rating_value = COALESCE($10, rating_value),
            rating_count = COALESCE($11, rating_count),
-           raw_hash = $12,
+           visits_monthly = COALESCE($12, visits_monthly),
+           traffic_sources_json = COALESCE($13::jsonb, traffic_sources_json),
+           description_long = COALESCE($14, description_long),
+           raw_hash = $15,
            updated_at = now(),
            last_seen_at = now(),
            last_changed_at = CASE
-             WHEN raw_hash IS DISTINCT FROM $12 THEN now()
+             WHEN raw_hash IS DISTINCT FROM $15 THEN now()
              ELSE last_changed_at
            END
          WHERE source_url = $1
@@ -427,6 +673,9 @@ async function persistEnrichment(client, rows) {
           row.hasFreePlan,
           row.ratingValue,
           row.ratingCount,
+          row.visitsMonthly,
+          JSON.stringify(row.trafficSources || {}),
+          row.profile?.intro || null,
           row.rawHash
         ]
       );
@@ -468,6 +717,73 @@ async function persistEnrichment(client, rows) {
           [entityId, faq.question, faq.answer, i]
         );
       }
+
+      await client.query(`DELETE FROM entity_platforms WHERE entity_id = $1`, [entityId]);
+      for (const platform of row.platforms) {
+        const platformId = await upsertPlatform(client, platform);
+        await client.query(
+          `INSERT INTO entity_platforms (entity_id, platform_id)
+           VALUES ($1, $2)
+           ON CONFLICT (entity_id, platform_id) DO NOTHING`,
+          [entityId, platformId]
+        );
+      }
+
+      await client.query(
+        `INSERT INTO entity_profiles (
+           entity_id,
+           intro,
+           target_users_json,
+           how_to_steps_json,
+           features_json,
+           benefits_json,
+           use_cases_json,
+           alternatives_json,
+           company_json,
+           analytics_json,
+           section_hash,
+           updated_at
+         ) VALUES (
+           $1,
+           $2,
+           $3::jsonb,
+           $4::jsonb,
+           $5::jsonb,
+           $6::jsonb,
+           $7::jsonb,
+           $8::jsonb,
+           $9::jsonb,
+           $10::jsonb,
+           $11,
+           now()
+         )
+         ON CONFLICT (entity_id)
+         DO UPDATE SET
+           intro = EXCLUDED.intro,
+           target_users_json = EXCLUDED.target_users_json,
+           how_to_steps_json = EXCLUDED.how_to_steps_json,
+           features_json = EXCLUDED.features_json,
+           benefits_json = EXCLUDED.benefits_json,
+           use_cases_json = EXCLUDED.use_cases_json,
+           alternatives_json = EXCLUDED.alternatives_json,
+           company_json = EXCLUDED.company_json,
+           analytics_json = EXCLUDED.analytics_json,
+           section_hash = EXCLUDED.section_hash,
+           updated_at = now()`,
+        [
+          entityId,
+          row.profile?.intro || null,
+          JSON.stringify(row.profile?.targetUsers || []),
+          JSON.stringify(row.profile?.howToSteps || []),
+          JSON.stringify(row.profile?.features || []),
+          JSON.stringify(row.profile?.benefits || []),
+          JSON.stringify(row.profile?.useCases || []),
+          JSON.stringify(row.profile?.alternatives || []),
+          JSON.stringify(row.profile?.companyInfo || {}),
+          JSON.stringify(row.profile?.analytics || {}),
+          hashValue(JSON.stringify(row.profile || {}))
+        ]
+      );
 
       await client.query(
         `INSERT INTO entity_raw_snapshots (entity_id, raw_json)

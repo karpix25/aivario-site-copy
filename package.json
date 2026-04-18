@@ -12,7 +12,8 @@
     "db:creati:upsert:apply": "node scripts/upsert-creati-to-postgres.mjs --apply",
     "enrich:creati:profiles": "node scripts/enrich-creati-profiles.mjs",
     "creati:progress": "node scripts/creati-progress.mjs",
-    "db:creati:export:frontend": "node scripts/export-creati-for-frontend.mjs"
+    "db:creati:export:frontend": "node scripts/export-creati-for-frontend.mjs",
+    "creati:quality": "node scripts/creati-quality-report.mjs"
   },
   "dependencies": {
     "pg": "^8.16.0",

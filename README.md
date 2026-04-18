@@ -42,6 +42,7 @@ Outputs are written to `data/creati/index/`:
 
 ```bash
 psql "$DATABASE_URL" -f db/migrations/001_creati_ingestion_init.sql
+psql "$DATABASE_URL" -f db/migrations/002_entity_profiles.sql
 ```
 
 2) Preview upsert payload (no DB writes):
@@ -72,6 +73,14 @@ DATABASE_URL="postgres://user:pass@host:5432/dbname" npm run enrich:creati:profi
 ```
 
 Generated file: `data/creati/enriched/latest.json`
+
+## Quality Report
+
+```bash
+DATABASE_URL="postgres://user:pass@host:5432/dbname" npm run creati:quality
+```
+
+This report prints fill-rate for core fields and profile section coverage.
 
 ## Check Progress
 

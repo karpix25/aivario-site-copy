@@ -20,7 +20,7 @@ async function loadRows(client, limit) {
   const entityQuery = await client.query(
     `SELECT id, entity_type::text AS entity_type, slug, source_url, name, headline,
             description_short, website_url, logo_url, image_url,
-            pricing_label, rating_value, rating_count
+            pricing_label, rating_value, rating_count, visits_monthly
      FROM entities
      WHERE is_active = true
        AND entity_type IN ('tool', 'agent', 'mcp_server', 'mcp_client')
@@ -50,6 +50,22 @@ async function loadRows(client, limit) {
     [ids]
   );
 
+  const platformQuery = await client.query(
+    `SELECT ep.entity_id, p.code, p.name
+     FROM entity_platforms ep
+     JOIN platforms p ON p.id = ep.platform_id
+     WHERE ep.entity_id = ANY($1::uuid[])`,
+    [ids]
+  );
+
+  const profileQuery = await client.query(
+    `SELECT entity_id, intro, target_users_json, how_to_steps_json, features_json,
+            benefits_json, use_cases_json, alternatives_json, company_json, analytics_json
+     FROM entity_profiles
+     WHERE entity_id = ANY($1::uuid[])`,
+    [ids]
+  );
+
   const categoryMap = new Map();
   for (const row of categoryQuery.rows) {
     if (!categoryMap.has(row.entity_id)) {
@@ -66,9 +82,34 @@ async function loadRows(client, limit) {
     tagMap.get(row.entity_id).push({ name: row.name, slug: row.slug });
   }
 
+  const platformMap = new Map();
+  for (const row of platformQuery.rows) {
+    if (!platformMap.has(row.entity_id)) {
+      platformMap.set(row.entity_id, []);
+    }
+    platformMap.get(row.entity_id).push({ code: row.code, name: row.name });
+  }
+
+  const profileMap = new Map();
+  for (const row of profileQuery.rows) {
+    profileMap.set(row.entity_id, {
+      intro: row.intro,
+      targetUsers: row.target_users_json || [],
+      howToSteps: row.how_to_steps_json || [],
+      features: row.features_json || [],
+      benefits: row.benefits_json || [],
+      useCases: row.use_cases_json || [],
+      alternatives: row.alternatives_json || [],
+      companyInfo: row.company_json || {},
+      analytics: row.analytics_json || {}
+    });
+  }
+
   return entityQuery.rows.map((row) => {
     const categories = categoryMap.get(row.id) || [];
     const tags = tagMap.get(row.id) || [];
+    const platforms = platformMap.get(row.id) || [];
+    const profile = profileMap.get(row.id) || null;
     return {
       entityType: row.entity_type,
       slug: row.slug,
@@ -82,9 +123,12 @@ async function loadRows(client, limit) {
       pricingLabel: row.pricing_label,
       ratingValue: row.rating_value ? Number(row.rating_value) : null,
       ratingCount: row.rating_count,
+      visitsMonthly: row.visits_monthly ? Number(row.visits_monthly) : null,
       primaryCategory: categories[0]?.name || null,
       categories,
-      tags
+      tags,
+      platforms,
+      profile
     };
   });
 }

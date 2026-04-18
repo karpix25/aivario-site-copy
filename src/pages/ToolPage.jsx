@@ -8,6 +8,9 @@ const tableOfContents = [
   { id: "features", label: "Key features" },
   { id: "pricing", label: "Pricing" },
   { id: "pros-cons", label: "Pros and cons" },
+  { id: "use-cases", label: "Use cases" },
+  { id: "how-to", label: "How to use" },
+  { id: "analytics", label: "Analytics" },
   { id: "faq", label: "FAQ" },
   { id: "verdict", label: "Our verdict" }
 ];
@@ -217,6 +220,52 @@ export default function ToolPage() {
             </div>
           </section>
 
+          {tool.useCases?.length > 0 && (
+            <section id="use-cases" className="content-section">
+              <h2>Use cases</h2>
+              <ul>
+                {tool.useCases.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {tool.howToSteps?.length > 0 && (
+            <section id="how-to" className="content-section">
+              <h2>How to use {tool.name}</h2>
+              <ol className="how-to-list">
+                {tool.howToSteps.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {(tool.analytics?.monthlyVisits || tool.analytics?.avgDuration || tool.visitsMonthly) && (
+            <section id="analytics" className="content-section">
+              <h2>Analytics snapshot</h2>
+              <div className="analytics-grid">
+                <article>
+                  <small>Monthly visits</small>
+                  <strong>{tool.analytics?.monthlyVisits || tool.visitsMonthly || "n/a"}</strong>
+                </article>
+                <article>
+                  <small>Avg duration</small>
+                  <strong>{tool.analytics?.avgDuration || "n/a"}</strong>
+                </article>
+                <article>
+                  <small>Pages / visit</small>
+                  <strong>{tool.analytics?.pagesPerVisit || "n/a"}</strong>
+                </article>
+                <article>
+                  <small>Bounce rate</small>
+                  <strong>{tool.analytics?.bounceRate || "n/a"}</strong>
+                </article>
+              </div>
+            </section>
+          )}
+
           <section id="faq" className="content-section">
             <h2>{tool.name} FAQ</h2>
             {tool.faqs.map((item) => (
@@ -249,6 +298,15 @@ export default function ToolPage() {
             </a>
           ))}
           <div className="toc-divider" />
+          {tool.platforms?.length > 0 && (
+            <>
+              <h4>Platforms</h4>
+              {tool.platforms.map((platform) => (
+                <p key={platform.code}>{platform.name}</p>
+              ))}
+              <div className="toc-divider" />
+            </>
+          )}
           <h4>Alternatives</h4>
           {tool.alternatives.map((alternative) => (
             <Link key={alternative} to={`/tools/${alternative}`} className="toc-link">
