@@ -371,11 +371,93 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.entity-summary-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.entity-summary-grid article {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: var(--card2);
+  display: grid;
+}
+
+.entity-summary-grid strong {
+  font-size: 1.1rem;
+}
+
+.entity-summary-grid span {
+  color: var(--ink3);
+  font-size: 0.82rem;
+}
+
+.type-tabs {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card2);
+  color: var(--ink2);
+  padding: 0.46rem 0.84rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.tab-btn.active {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.category-filters {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink2);
+  border-radius: 999px;
+  padding: 0.42rem 0.74rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.chip.active {
+  background: #ece9e0;
+  color: var(--ink);
+}
+
+.result-line {
+  margin-top: 0.85rem;
+}
+
 .pick-card,
 .tool-card {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 0.8rem;
+}
+
+.entity-pill {
+  display: inline-block;
+  margin-top: 0.55rem;
+  color: var(--ink3);
+  text-transform: capitalize;
 }
 
 .pick-top,
@@ -788,7 +870,8 @@
   .subscribe-card,
   .detail-grid,
   .tool-kpis,
-  .pros-cons-grid {
+  .pros-cons-grid,
+  .entity-summary-grid {
     grid-template-columns: 1fr;
   }
 }

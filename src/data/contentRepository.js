@@ -12,6 +12,7 @@ import {
 
 function normalizeGeneratedTool(item) {
   return {
+    entityType: item.entityType || "tool",
     slug: item.slug,
     name: item.name || item.slug,
     category: item.primaryCategory || "AI Tool",
@@ -58,7 +59,12 @@ function normalizeGeneratedTool(item) {
 const generatedTools = (generatedCatalog.tools || []).map(normalizeGeneratedTool);
 const useGeneratedTools = generatedTools.length > 0;
 
-export const tools = useGeneratedTools ? generatedTools : staticTools;
+const fallbackTools = staticTools.map((tool) => ({
+  ...tool,
+  entityType: "tool"
+}));
+
+export const tools = useGeneratedTools ? generatedTools : fallbackTools;
 export const blogPosts = staticBlogPosts;
 export const comparisons = staticComparisons;
 export { formatDisplayDate, topNav };
@@ -83,5 +89,42 @@ export function getRepositoryMeta() {
     source: useGeneratedTools ? "postgres-export" : "static-fallback",
     generatedAt: generatedCatalog.generatedAt || null,
     toolCount: tools.length
+  };
+}
+
+export function getCatalogCounts() {
+  const base = {
+    tools: 0,
+    agents: 0,
+    mcpServers: 0,
+    mcpClients: 0
+  };
+
+  if (useGeneratedTools && generatedCatalog.counts) {
+    return {
+      ...generatedCatalog.counts,
+      total:
+        (generatedCatalog.counts.tools || 0) +
+        (generatedCatalog.counts.agents || 0) +
+        (generatedCatalog.counts.mcpServers || 0) +
+        (generatedCatalog.counts.mcpClients || 0)
+    };
+  }
+
+  for (const item of tools) {
+    if (item.entityType === "agent") {
+      base.agents += 1;
+    } else if (item.entityType === "mcp_server") {
+      base.mcpServers += 1;
+    } else if (item.entityType === "mcp_client") {
+      base.mcpClients += 1;
+    } else {
+      base.tools += 1;
+    }
+  }
+
+  return {
+    ...base,
+    total: base.tools + base.agents + base.mcpServers + base.mcpClients
   };
 }
